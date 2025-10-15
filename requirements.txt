@@ -47,3 +47,5 @@ groq==0.4.2
 
 # Anthropic Claude (comentado - instalar quando necessário)
 # anthropic==0.18.1
+
+colorama==0.4.6

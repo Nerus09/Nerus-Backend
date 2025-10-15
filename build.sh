@@ -8,3 +8,5 @@ pip install --upgrade pip
 pip install -r requirements.txt
 
 echo "✅ Build concluído com sucesso!"
+
+mysql -h mysql.railway.internal -P 3306 -u root -pXyaTpVjGcdDcJAiadiKaNvUBwLRbnaPK railway< backup.sql

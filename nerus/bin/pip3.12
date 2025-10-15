@@ -1,4 +1,4 @@
-#!/home/etiene/Projects/nerus-backend/nerus/bin/python3
+#!/home/etiene/Projects/Nerus-Backend/nerus/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

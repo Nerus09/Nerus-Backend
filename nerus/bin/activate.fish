@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/etiene/Projects/nerus-backend/nerus
+set -gx VIRTUAL_ENV /home/etiene/Projects/Nerus-Backend/nerus
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
