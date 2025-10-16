@@ -62,8 +62,8 @@ async def register_user(
         query = """
         INSERT INTO users (
             nome, username, email, senha_hash, data_nascimento,
-            nivel_educacao, palavras_chave, token_verificacao, email_verificado
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, FALSE)
+            nivel_educacao, token_verificacao, email_verificado
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE)
         """
         
         cursor.execute(query, (
@@ -73,7 +73,6 @@ async def register_user(
             senha_hash,
             user_data.data_nascimento,
             user_data.nivel_educacao,
-            user_data.palavras_chave,
             verification_token
         ))
         
@@ -147,12 +146,12 @@ async def register_empresa(
         
         print(f"🔍 DEBUG - Inserindo empresa no banco...")
         
-        # CORREÇÃO: Remover descricao da query (não existe no schema)
+        # Inserir empresa
         query = """
         INSERT INTO empresas (
             nome, email, senha_hash, nif, setor_atuacao,
-            token_verificacao, email_verificado, tamanho_empresa
-        ) VALUES (%s, %s, %s, %s, %s, %s, FALSE, %s)
+            token_verificacao, email_verificado
+        ) VALUES (%s, %s, %s, %s, %s, %s, FALSE)
         """
         
         cursor.execute(query, (
@@ -162,7 +161,6 @@ async def register_empresa(
             empresa_data.nif,
             empresa_data.setor_atuacao,
             verification_token,
-            empresa_data.tamanho_empresa
         ))
         
         empresa_id = cursor.lastrowid
@@ -344,19 +342,23 @@ async def resend_verification(
 
 @router.post("/login", response_model=LoginResponse)
 def login(
-    login_data: LoginRequest,
+    login_data: LoginRequest,  # Só recebe email e senha
     cursor = Depends(get_db)
 ):
-    """Fazer login (usuário ou empresa)"""
+    """
+    Login para usuário ou empresa
+    """
     
-    if login_data.tipo_usuario == "user":
-        cursor.execute(
-            "SELECT * FROM users WHERE email = %s",
-            (login_data.email,)
-        )
-        user = cursor.fetchone()
-        
-        if not user or not verify_password(login_data.senha, user['senha_hash']):
+    # 1️⃣ TENTAR BUSCAR NOS USUÁRIOS
+    cursor.execute(
+        "SELECT * FROM users WHERE email = %s",
+        (login_data.email,)
+    )
+    user = cursor.fetchone()
+    
+    if user:
+        # ✅ ENCONTROU NOS USUÁRIOS
+        if not verify_password(login_data.senha, user['senha_hash']):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Email ou senha incorretos"
@@ -373,11 +375,10 @@ def login(
             data={
                 "sub": user['id'],
                 "email": user['email'],
-                "tipo": "user"
+                "tipo": "user"  # ✅ Backend define
             }
         )
         
-        # 🔥 ATUALIZADO: Usando estrutura aninhada
         return LoginResponse(
             access_token=access_token,
             token_type="bearer",
@@ -385,19 +386,21 @@ def login(
                 user_id=user['id'],
                 nome=user['nome'],
                 email=user['email'],
-                tipo_usuario="user",
+                tipo_usuario="user",  # ✅ Backend informa
                 email_verificado=user['email_verificado']
             )
         )
     
-    else:  # empresa
-        cursor.execute(
-            "SELECT * FROM empresas WHERE email = %s",
-            (login_data.email,)
-        )
-        empresa = cursor.fetchone()
-        
-        if not empresa or not verify_password(login_data.senha, empresa['senha_hash']):
+    # 2️⃣ SE NÃO ENCONTROU, TENTAR NAS EMPRESAS
+    cursor.execute(
+        "SELECT * FROM empresas WHERE email = %s",
+        (login_data.email,)
+    )
+    empresa = cursor.fetchone()
+    
+    if empresa:
+        # ✅ ENCONTROU NAS EMPRESAS
+        if not verify_password(login_data.senha, empresa['senha_hash']):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Email ou senha incorretos"
@@ -414,11 +417,10 @@ def login(
             data={
                 "sub": empresa['id'],
                 "email": empresa['email'],
-                "tipo": "empresa"
+                "tipo": "empresa"  # ✅ Backend define
             }
         )
         
-        # 🔥 ATUALIZADO: Usando estrutura aninhada
         return LoginResponse(
             access_token=access_token,
             token_type="bearer",
@@ -426,10 +428,16 @@ def login(
                 user_id=empresa['id'],
                 nome=empresa['nome'],
                 email=empresa['email'],
-                tipo_usuario="empresa",
+                tipo_usuario="empresa",  # ✅ Backend informa
                 email_verificado=empresa['email_verificado']
             )
         )
+    
+    # 3️⃣ NÃO ENCONTROU EM NENHUMA TABELA
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Email ou senha incorretos"
+    )
 
 # ==================== LOGOUT ====================
 

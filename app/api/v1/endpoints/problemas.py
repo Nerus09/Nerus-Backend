@@ -14,12 +14,9 @@ class ProblemaCreate(BaseModel):
     """Schema para criar problema"""
     titulo: str = Field(..., min_length=10, max_length=255)
     descricao: str = Field(..., min_length=50)
-    contexto_empresa: Optional[str] = None
     area: str
     nivel_dificuldade: str = Field(..., pattern="^(iniciante|intermediario|avancado)$")
     tipo: str = Field("free", pattern="^(free|premium)$")
-    objetivos: Optional[str] = None
-    requisitos: Optional[str] = None
     recursos_fornecidos: Optional[str] = None
     prazo_dias: int = Field(30, ge=1, le=365)
     pontos_recompensa: int = Field(100, ge=50, le=10000)
@@ -73,8 +70,8 @@ def criar_problema(
     # Inserir problema
     query = """
     INSERT INTO problemas (
-        empresa_id, titulo, descricao, contexto_empresa, area,
-        nivel_dificuldade, tipo, objetivos, requisitos, recursos_fornecidos,
+        empresa_id, titulo, descricao, area,
+        nivel_dificuldade, tipo, recursos_fornecidos,
         prazo_dias, pontos_recompensa, oferece_certificado, premio_descricao,
         data_inicio, data_fim
     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -84,12 +81,9 @@ def criar_problema(
         current_empresa['id'],
         problema.titulo,
         problema.descricao,
-        problema.contexto_empresa,
         problema.area,
         problema.nivel_dificuldade,
         problema.tipo,
-        problema.objetivos,
-        problema.requisitos,
         problema.recursos_fornecidos,
         problema.prazo_dias,
         problema.pontos_recompensa,
